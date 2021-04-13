@@ -280,6 +280,16 @@ class SessionInterface(object):
         .. versionadded:: 0.11
         """
 
+        # TODO(BNCH-23148): Remove this after flask migration, this reverts behaviour to 0.10.1.
+        # Always set cookie in response header, even if session is non-permanent (SAML) or unmodified.
+        # https://github.com/pallets/flask/commit/d1d835c02302884b2db1cab099b3ea6a84f41d32#diff-7105874a5fdae245accfb9be2e16cd5ec35a83b9cf4175d894d10650dcfb5748R353-R354
+
+        # This is for purposes of updating existing session cookies to `SameSite=None`.
+        # This also allows Chrome browser SameSite "Lax+POST" exception to continue working (by coincidence).
+        # Without this "fix", users going through SAML flow at time of upgrade will not have upgraded their cookie and will
+        # clobber it, breaking the cookie altogether (BNCH-23674)
+        return True
+
         return session.modified or (
             session.permanent and app.config["SESSION_REFRESH_EACH_REQUEST"]
         )
